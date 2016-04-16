@@ -15,7 +15,7 @@ library(solaR)
 ##############################################################################
 load('data/boundaries.Rdata')
 load('data/linea.Rdata')
-load('data/mascarasClusters.Rdata')
+load('data/mascaraClustersSat.Rdata')
 load('data/cmsafRasterdailyRadiation.Rdata') 
 
 ## Creo un raster con valores medios mensuales para que sea más pequeño
@@ -79,10 +79,10 @@ levelplot(mask(productividad, boundaries_sp),
 prod_clusters <- function(x, iCluster)
 {
     ## x es raster con datos de "productividad", iCluster es el numero de cluster que quiero analizar.
-    mask(x, mascarasClusters[[iCluster]])
+    mask(x, ksB[[iCluster]])
 }
 
-nClusters <- nlayers(mascarasClusters)
+nClusters <- nlayers(ksB)
 
 prodByCluster <- lapply(seq_len(nClusters),
                         FUN = function(i) prod_clusters(productividad, i)) 
