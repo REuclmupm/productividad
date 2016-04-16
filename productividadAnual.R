@@ -41,16 +41,19 @@ SISmm <- SISmm*24
 
 latLayer <- init(SISmm, v='y') ## extraigo la latitud
 
-foo <- function(x, ...){
-gef <- calcGef(lat=x[1], dataRad=list(G0dm=x[2:13]))
-result <- as.data.frameY(gef)[c('Gefd', 'Befd', 'Defd')] ##the results are yearly values
-as.numeric(result)
+foo <- function(x, ...)
+{
+    gef <- calcGef(lat = x[1], dataRad = list(G0dm = x[2:13]))
+    result <- as.data.frameY(gef)[c('Gefd', 'Befd', 'Defd')] ##the results are yearly values
+    as.numeric(result)
 }
 
-gefS <- calc(stack(latLayer, SISmm), foo, overwrite=TRUE)
-names(gefS)=c('Gefd', 'Befd', 'Defd')##Three layers
 
-levelplot(subset(gefS, 'Gefd')) + layer(sp.lines(linea))
+gefS <- calc(stack(latLayer, SISmm), foo, overwrite=TRUE)
+names(gefS) <- c('Gefd', 'Befd', 'Defd')##Three layers
+
+levelplot(subset(gefS, 'Gefd')) +
+    layer(sp.lines(linea))
 
 #############################################################################
 ## 3. PRODUCTIVIDAD ANUAL PARA CADA CELDA. (por tipo de seguidor)
@@ -67,7 +70,10 @@ PR <- 0.74
 gefS <- subset(gefS, 'Gefd')
 productividad <- PR*(gefS)
 
-levelplot(mask(productividad, boundaries_sp), margin=FALSE, main='PRODUCTIVIDAD ANUAL kWh/kWp')+layer(sp.lines(linea))
+levelplot(mask(productividad, boundaries_sp),
+          margin=FALSE,
+          main='PRODUCTIVIDAD ANUAL kWh/kWp') +
+    layer(sp.lines(linea))
 
 ## Aplico la mascara de clusters para la productividad y calculo la "media de productividad" por cluster para comparar". 
 
