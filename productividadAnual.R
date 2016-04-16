@@ -7,14 +7,14 @@ library(ncdf4)
 library(maptools)
 library(mapdata)
 library(rgdal)
+library(parallel)
+library(solaR)
 
 load('/home/claudia/Documentos/PROMES/kmeans/modeloCorregido/boundaries.Rdata')
 load('/home/claudia/Documentos/PROMES/kmeans/modeloCorregido/linea.Rdata')
 load('/home/claudia/Documentos/PROMES/kmeans/modeloCorregido/mascarasClusters.Rdata')
 load('cmsafRasterdailyRadiation.Rdata') 
 
-library(parallel)
-library(solaR)
 
 ###############################################################################
 ## 1. DATOS
