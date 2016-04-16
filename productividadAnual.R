@@ -76,20 +76,18 @@ levelplot(mask(productividad, boundaries_sp),
     layer(sp.lines(linea))
 
 ## Aplico la mascara de clusters para la productividad y calculo la "media de productividad" por cluster para comparar". 
-
-prod_clusters <- function(x, y){
-    ## x es raster con datos de radiación efectiva anual, y es el cluster que quiero analizar.
-    prod <- mask(x,mascarasClusters[[y]])
-    prod_media <- cellStats(prod, stat='mean')
-    sol <- list(prod, prod_media)
-    return(sol)
+prod_clusters <- function(x, iCluster)
+{
+    ## x es raster con datos de "productividad", iCluster es el numero de cluster que quiero analizar.
+    mask(x, mascarasClusters[[iCluster]])
 }
 
-prodBycluster <- list(1:6)
-for (i in 1:6) prodBycluster[[i]] <-prod_clusters(productividad, i)
+nClusters <- nlayers(mascarasClusters)
 
-mediaBycluster <- c(1:6)
-for (i in 1:6) mediaBycluster[i] <- prodBycluster[[i]][[2]]
+prodByCluster <- lapply(seq_len(nClusters),
+                        FUN = function(i) prod_clusters(productividad, i)) 
+
+mediaByCluster <- lapply(prodByCluster, FUN = cellStats)
 
 #######################################################################
 ## Calculo de productividad con seguidores a DOBLE EJE:
