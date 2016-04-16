@@ -10,15 +10,13 @@ library(rgdal)
 library(parallel)
 library(solaR)
 
-load('/home/claudia/Documentos/PROMES/kmeans/modeloCorregido/boundaries.Rdata')
-load('/home/claudia/Documentos/PROMES/kmeans/modeloCorregido/linea.Rdata')
-load('/home/claudia/Documentos/PROMES/kmeans/modeloCorregido/mascarasClusters.Rdata')
-load('cmsafRasterdailyRadiation.Rdata') 
-
-
 ###############################################################################
 ## 1. DATOS
 ##############################################################################
+load('data/boundaries.Rdata')
+load('data/linea.Rdata')
+load('data/mascarasClusters.Rdata')
+load('data/cmsafRasterdailyRadiation.Rdata') 
 
 ## Creo un raster con valores medios mensuales para que sea más pequeño
 
