@@ -152,17 +152,16 @@ result <- as.data.frameY(prod)[c('Eac', 'Edc', 'Yf')] ##the results are yearly v
 as.numeric(result)
 } ## para sacar los valores anuales. Yf es productividad.
 
-
 Prod  <- calc(stack(latLayer, SISmm), foo, overwrite=TRUE)
 Prod_Yf <- subset(Prod, 'layer.3')
 
-prodBycluster <- list(1:6)
-for (i in 1:6) prodBycluster[[i]] <-prod_clusters(Prod_Yf,i)
+prodByCluster <- lapply(seq_len(nClusters), FUN = function(i)
+                                                  prod_clusters(Prod_Yf, i))
 
-mediaBycluster<- c(1:6)
-for (i in 1:6) mediaBycluster[i] <- prodBycluster[[i]][[2]]
+mediaByCluster <- lapply(prodByCluster, FUN = function(x) cellStats(x,
+                                                                    stat='mean'))
 
-
+ 
 ## 2. Seguidor N-S
 
 foo_ns<- function(x, ...){
@@ -174,11 +173,11 @@ as.numeric(result)
 Prod_ns <- calc(stack(latLayer, SISmm), foo_ns, overwrite=TRUE)
 Prod_ns_Yf <- subset(Prod_ns, 'layer.3')
 
-prodBycluster_ns<- list(1:6)
-for (i in 1:6) prodBycluster_ns[[i]] <-prod_clusters(Prod_ns_Yf,i)
+prodByCluster_ns <- lapply(seq_len(nClusters), FUN = function(i)
+                                                  prod_clusters(Prod_ns_Yf, i))
 
-mediaBycluster_ns<- c(1:6)
-for (i in 1:6) mediaBycluster_ns[i] <- prodBycluster_ns[[i]][[2]]
+mediaByCluster_ns <- lapply(prodByCluster_ns, FUN = function(x) cellStats(x,
+                                                                    stat='mean'))
 
 
 ## 3. Seguidor Doble eje
@@ -192,11 +191,12 @@ as.numeric(result)
 Prod_two <- calc(stack(latLayer, SISmm), foo_two, overwrite=TRUE)
 Prod_two_Yf <- subset(Prod_two, 'layer.3')
 
-prodBycluster_two<- list(1:6)
-for (i in 1:6) prodBycluster_two[[i]] <-prod_clusters(Prod_two_Yf,i)
+prodByCluster_two <- lapply(seq_len(nClusters), FUN = function(i)
+                                                  prod_clusters(Prod_two_Yf, i))
 
-mediaBycluster_two<- c(1:6)
-for (i in 1:6) mediaBycluster_two[i] <- prodBycluster_two[[i]][[2]]
+mediaByCluster_two <- lapply(prodByCluster_two, FUN = function(x) cellStats(x,
+                                                                    stat='mean'))
+
 
 #####################################################################################
 ## GRAFICAS
@@ -214,7 +214,7 @@ dev.off()
 
 ## matriz de medias de productividad por cluster:
 
-byClusterMatrix <- cbind(mediaBycluster, mediaBycluster_ns, mediaBycluster_two)
+byClusterMatrix <- cbind(mediaByCluster, mediaByCluster_ns, mediaByCluster_two)
 rownames(byClusterMatrix) <- c("C1", "C2", "C3", "C4", "C5", "C6")
 
 library(lattice)
