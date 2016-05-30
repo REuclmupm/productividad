@@ -62,30 +62,26 @@ fooGef <- function(g0, idx){
 
 ##################
 
-## Este es el código que hace en paralelo la función que se le expecifica en FUN. Para las funciones mean, sum etc funciona, pero da problemas con la que yo he difinido. Creo que el problema está en que lo que devuelve la función fooGef es un raster y lo que hay al final del codigo de paralelo es para poner en formato raster algo que estaba como data.frame.
-
-fooParallel <- function(data, filename="", nodes=detectCores(), blocks=6,...){
+## Este es el código que hace en paralelo la función que se le expecifica en FUN. Para las funciones mean, sum etc funciona, pero da problemas con la que yo he difinido.
+ 
+fooParallel <- function(data,filename="", nodes=detectCores(), blocks=6,...){
     ## latitude values as a new raster
     y <- init(data, v='y')
     idx <- getZ(data)
 
     bs <- blockSize(data, minblocks=blocks*nodes)
-
-
+    
 fooGef <- function(g0){
     n <- length(g0)
     lat <- g0[1]
-    g0d <- list(file = zoo(data.frame(G0 = g0[2:n]),  idx),
-                lat = lat)
-    Prod <- lapply(g0d, FUN=function(y) calc(y, fun=function(x){
-                         prod <- prodGCPV(lat=lat, dataRad= g0d, keep.night=FALSE)
-                         result <- as.data.frameY(prod)[c('Eac', 'Edc', 'Yf')] ##the results are yearly values
-                         as.numeric(result)
-                     })
-                 )
-                 ## para sacar los valores anuales. Yf es productividad.
-                 Prod_Yf <- as.numeric(as.data.frame(subset(Prod, 'layer.3')))
-                 return(Prod_Yf)
+    g0d <- list(G0dm= c(g0[2:n]), Ta=c(rep(25, 12)))
+    Prod <- prodGCPV(lat= lat,
+                     dataRad= g0d,
+                     keep.night=FALSE)
+    result <- as.data.frameY(Prod)[c('Yf')] ##the results are yearly values
+   result <- as.numeric(result) ## para sacar los valores anuales. Yf es productividad.
+   Prod_Yf <- result['Yf']
+   return(result)
 }
 
     
@@ -109,7 +105,7 @@ fooGef <- function(g0){
                           do.call(c, resList)
                     }, mc.cores = nodes)                                                                                              
   ## The result of mclapply is a list with as many elements as nodes
-  ## Each element of the list is a matrix with 3 columns (resCl0)
+  ## Each element of the list is a matrix with 1 columns (resCl0)
   ## corresponding to a block as defined by bs.
   resCl <- do.call(c, resCl)  
     
