@@ -7,6 +7,7 @@ library(rgdal)
 library(maps)
 library(maptools)
 library(parallel)
+library(solaR)
 
 ## Calculate the annual productivity using parallel function
 
@@ -33,7 +34,7 @@ SISmm <- zApply(SISS, by=month, fun='mean') ## medias mensuales de irradiancia
 SISmm <- SISmm*24
 
 ########################################################################
-## 2. Gef
+## 2. ProdCGPV
 #######################################################################
 
 ###############################################################
@@ -42,7 +43,7 @@ SISmm <- SISmm*24
 
 ## Esta es la función que quiero hacer el paralelo
 
-fooGef <- function(g0, idx){
+fooProd <- function(g0, idx){
     n <- length(g0)
     lat <- g0[1]
     g0d <- list(file = zoo(data.frame(G0 = g0[2:n]),  idx),
@@ -71,12 +72,11 @@ fooParallel <- function(data,filename="", nodes=detectCores(), blocks=6,...){
 
     bs <- blockSize(data, minblocks=blocks*nodes)
     
-fooGef <- function(g0){
+fooProd <- function(g0){
     n <- length(g0)
     lat <- g0[1]
-    g0d <- list(G0dm= c(g0[2:n]), Ta=c(rep(25, 12)))
     Prod <- prodGCPV(lat= lat,
-                     dataRad= g0d,
+                     dataRad= list(G0dm=g0[2:n]),
                      keep.night=FALSE)
     result <- as.data.frameY(Prod)[c('Yf')] ##the results are yearly values
    result <- as.numeric(result) ## para sacar los valores anuales. Yf es productividad.
@@ -97,7 +97,7 @@ fooGef <- function(g0){
                               lat <- getValues(y, bs$row[i], bs$nrows[i])
                               vals <- cbind(lat, vals)
                               cat(i, ':', range(lat), '\n')
-                              res0 <- try(apply(vals, MARGIN=1L, FUN=fooGef))
+                              res0 <- try(apply(vals, MARGIN=1L, FUN=fooProd))
                               cat(i, ':', range(res0), '\n')
                               if (inherits(res0, 'try-error')) res0 <- NA
                               else  res0
@@ -109,10 +109,11 @@ fooGef <- function(g0){
   ## corresponding to a block as defined by bs.
   resCl <- do.call(c, resCl)  
     
-  out <- stack(data) 
+  out <- raster(data) 
   out <- setValues(out, resCl)
   if (filename!='') out <- writeRaster(out, filename=filename)
   out
 }
 
 prueba <- fooParallel(SISmm)
+
