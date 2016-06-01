@@ -41,24 +41,20 @@ SISmm <- SISmm*24
 ## mi prueba
 #####################
 
-## Esta es la función que quiero hacer el paralelo
+## Esta es la función que quiero hacer el paralelo. Puedo definirla fuera o crearla dentro.
 
-fooProd <- function(g0, idx){
+## Productividad anual FIXED.
+
+fooProd <- function(g0){
     n <- length(g0)
     lat <- g0[1]
-    g0d <- list(file = zoo(data.frame(G0 = g0[2:n]),  idx),
-                lat = lat)
-    Prod <- calc(g0d, fun=function(x){
-                         prod <- prodGCPV(lat=lat, dataRad= g0d, keep.night=FALSE)
-                         result <- as.data.frameY(prod)[c('Eac', 'Edc', 'Yf')] ##the results are yearly values
-                         as.numeric(result)
-                     }
-                 )
-                 ## para sacar los valores anuales. Yf es productividad.
-                 Prod_Yf <- as.numeric(as.data.frame(subset(Prod, 'layer.3')))
-                 return(Prod_Yf)
+    Prod <- prodGCPV(lat= lat,
+                     dataRad= list(G0dm=g0[2:n]),
+                     keep.night=FALSE)
+   result <- as.data.frameY(Prod)[c('Yf')] ##the results are yearly values
+   result <- as.numeric(result) ## para sacar los valores anuales. Yf es productividad.
+   return(result)
 }
-
 
 
 ##################
@@ -78,9 +74,8 @@ fooProd <- function(g0){
     Prod <- prodGCPV(lat= lat,
                      dataRad= list(G0dm=g0[2:n]),
                      keep.night=FALSE)
-    result <- as.data.frameY(Prod)[c('Yf')] ##the results are yearly values
+   result <- as.data.frameY(Prod)[c('Yf')] ##the results are yearly values
    result <- as.numeric(result) ## para sacar los valores anuales. Yf es productividad.
-   Prod_Yf <- result['Yf']
    return(result)
 }
 
@@ -116,4 +111,6 @@ fooProd <- function(g0){
 }
 
 prueba <- fooParallel(SISmm)
+
+levelplot(prueba, margin=FALSE)
 
