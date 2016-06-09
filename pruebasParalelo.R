@@ -22,6 +22,7 @@ load('data/cmsafRasterdailyRadiation.Rdata')
 
 ## Creo un raster con valores medios mensuales para que sea más pequeño
 
+SISS <- SISS*24
 idx <- seq(as.Date('1989-01-01'), as.Date('2008-12-30'), 'day')
 SISS <- setZ(SISS, idx)
 
@@ -112,5 +113,22 @@ fooProd <- function(g0){
 
 prueba <- fooParallel(SISmm)
 
-levelplot(prueba, margin=FALSE)
+#############################################################
+## 20 years productivity
+############################################################
 
+library(zoo)
+
+SISmm240 <- zApply(SISS, by=as.yearmon, fun='mean') ## SISS ya esta multimplicado por 24.
+idx <- seq(as.Date('1989-01-01'), as.Date('2008-12-31'), 'month') 
+SISmm240 <- setZ(SISmm240, idx) 
+names(SISmm240) <- idx
+
+year <- function(x) as.numeric(format(x, '%y'))
+
+ind <- rep(seq(1:20), each=12)
+YearlyProductivity <- zApply(SISmm240, by=ind, fun=fooParallel) 
+
+Fixed89_yearly <- fooParallel(subset(SISmm240, 1:12), filename='Fixed89_yearly.grd')
+Fixed90_yearly <- fooParallel(subset(SISmm240, 13:24),filename='Fixed90_yearly.grd')
+Fixed91_yearly <- fooParallel(subset(SISmm240, 25:36), filename='Fixed_yearly.grd')
