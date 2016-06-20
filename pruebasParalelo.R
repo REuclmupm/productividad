@@ -44,26 +44,26 @@ SISmm <- zApply(SISS, by=month, fun='mean') ## medias mensuales de irradiancia
 
 ## Este es el código que hace en paralelo la función que se le expecifica en FUN.
 
-fooParallel <- function(data,filename="", nodes=detectCores(), blocks=6,...){
+fooParallel <- function(data, filename="", modeTrk = 'fixed', nodes=detectCores(), blocks=6,...){
     ## latitude values as a new raster
     y <- init(data, v='y')
     idx <- getZ(data)
 
     bs <- blockSize(data, minblocks=blocks*nodes)
     
-fooProd <- function(g0){
-    n <- length(g0)
-    lat <- g0[1]
-    Prod <- prodGCPV(lat= lat,
-                     dataRad= list(G0dm=g0[2:n]),
-                     keep.night=FALSE, modeTrk='horiz')
-   result <- as.data.frameY(Prod)[c('Yf')] ##the results are yearly values
-   result <- as.numeric(result) ## para sacar los valores anuales. Yf es productividad.
-   return(result)
-}
+    fooProd <- function(g0){
+        n <- length(g0)
+        lat <- g0[1]
+        Prod <- prodGCPV(lat= lat,
+                         dataRad= list(G0dm=g0[2:n]),
+                         keep.night=FALSE, modeTrk = modeTrk)
+        result <- as.data.frameY(Prod)[c('Yf')] ##the results are yearly values
+        result <- as.numeric(result) ## para sacar los valores anuales. Yf es productividad.
+        return(result)
+    }
 
     
-  ## List with the indices of blocks for each node
+    ## List with the indices of blocks for each node
     iCluster <- splitIndices(bs$n, nodes)
     resCl <- mclapply(iCluster,
                       ## Each node receives an element of iCluster, a set of indices
@@ -81,16 +81,16 @@ fooProd <- function(g0){
                               else  res0
                           })
                           do.call(c, resList)
-                    }, mc.cores = nodes)                                                                                              
-  ## The result of mclapply is a list with as many elements as nodes
-  ## Each element of the list is a matrix with 1 columns (resCl0)
-  ## corresponding to a block as defined by bs.
-  resCl <- do.call(c, resCl)  
+                      }, mc.cores = nodes)                                                                                              
+    ## The result of mclapply is a list with as many elements as nodes
+    ## Each element of the list is a matrix with 1 columns (resCl0)
+    ## corresponding to a block as defined by bs.
+    resCl <- do.call(c, resCl)  
     
-  out <- raster(data) 
-  out <- setValues(out, resCl)
-  if (filename!='') out <- writeRaster(out, filename=filename)
-  out
+    out <- raster(data) 
+    out <- setValues(out, resCl)
+    if (filename!='') out <- writeRaster(out, filename=filename)
+    out
 }
 
 prueba <- fooParallel(SISmm)
@@ -102,21 +102,43 @@ prueba <- fooParallel(SISmm)
 ## Quiero calcular la productividad anual para cada uno de los años del periodo.
 
 library(zoo)
+## Medias mensuales por cada año
+SISmm240 <- zApply(SISS, by=as.yearmon, fun='mean') ## SISS ya esta multiplicado por 24.
+## Índice temporal (año-mes)
+idxSISmm <- getZ(SISmm240)
+## Trocea el índice temporal en grupos definidos por el año. El
+## resultado es una lista con tantos elementos como años.
+idLayers <- split(1:nlayers(SISmm240),
+                  year(idxSISmm)) 
+## Ahora recorremos esta lista con lapply, aplicando a cada grupo
+## (año) la función fooParallel, eligiendo previamente las capas que
+## corresponden a ese año
+yProdFixed <- lapply(idLayers, FUN = function(idx)
+{
+    SISmm <- subset(SISmm240, idx)
+    fooParallel(SISmm, modeTrk = 'fixed')
+})
+## El resultado es una lista con 20 rasters, con el resultado del
+## cálculo de productividad para cada año del periodo. En fooParallell
+## cambiamos modeTrk para obtener los resultados para cada tipo
+## de seguidor.
+yProdFixed <- stack(yProdFixed)
+writeRaster(yProdFixed, filename='YearlyProductivity20_fixed')
 
-SISmm240 <- zApply(SISS, by=as.yearmon, fun='mean') ## SISS ya esta multimplicado por 24.
-idx <- seq(as.Date('1989-01-01'), as.Date('2008-12-31'), 'month') 
-SISmm240 <- setZ(SISmm240, idx) 
+## Seguimiento eje horizontal
+yProdHoriz <- lapply(idLayers, FUN = function(idx)
+{
+    SISmm <- subset(SISmm240, idx)
+    fooParallel(SISmm, modeTrk = 'horiz')
+})
+yProdHoriz <- stack(yProdHoriz)
+writeRaster(yProdHoriz, filename='YearlyProductivity20_horiz')
 
-id <- seq(from=1, to=240, by=12)
-listaSISmm <- lapply(id, FUN=function(i) subset(SISmm240, seq(i, i+11)))
-
-YearlyProductivity <- lapply(listaSISmm, FUN=function(x) fooParallel(x)) ## Esta lista contiene 20 rasters con el resultado del cálculo de productividad para cada año del periodo. En fooParallell he ido cambiando modeTrk para obtener los resultados para cada tipo de seguidor.
-
-YearlyProductivity_fixed <- stack(YearlyProductivity)
-writeRaster(YearlyProductivity_fixed, filename='YearlyProductivity20_fixed')
-
-YearlyProductivity_horiz <- stack(YearlyProductivity)
-writeRaster(YearlyProductivity_horiz, filename='YearlyProductivity20_horiz')
-
-YearlyProductivity_two <- stack(YearlyProductivity)
-writeRaster(YearlyProductivity_two, filename='YearlyProductivity20_two')
+## Seguimiento Doble Eje
+yProdTwo <- lapply(idLayers, FUN = function(idx)
+{
+    SISmm <- subset(SISmm240, idx)
+    fooParallel(SISmm, modeTrk = 'two')
+})
+yProdTwo <- stack(yProdTwo)
+writeRaster(yProdTwo, filename='YearlyProductivity20_two')
