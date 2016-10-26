@@ -21,7 +21,7 @@ load('/home/claudia/variabilidad/linea.Rdata')
 ## Datos de radiación y temperatura de 30 años
 
 SISS <- stack('/home/claudia/clusters/SIS_cmsaf30_complete_005.grd')
-Tas <- stack('/home/claudia/productividad/conTemperatura/temperaturaECA_005.nc')
+Tas <- stack('/home/claudia/productividad/conTemperatura/temperaturaECA_004.nc')
 
 ## Creo un raster con valores medios mensuales para que sea más pequeño
 
@@ -77,7 +77,7 @@ fooParallel <- function(data, data2, filename='YearlyProductivity30_fixed_temp',
                               valsS <- getValues(data, bs$row[i], bs$nrows[i])
 			      valsT <- getValues(data2, bs$row[i], bs$nrow[i])                             
                               lat <- getValues(y, bs$row[i], bs$nrows[i])
-                              vals <- cbind(lat, valsS)
+                              vals <- cbind(lat, valsS, valsT)
                               cat(i, ':', range(lat), '\n')
                               res0 <- try(apply(vals, MARGIN=1L, FUN=fooProd))
                               cat(i, ':', range(res0), '\n')
@@ -97,7 +97,7 @@ fooParallel <- function(data, data2, filename='YearlyProductivity30_fixed_temp',
     out
 }
 
-#fooParallel(data1,data2)
+fooParallel(data1,data2)
 
 ##################################################################
 ## 3. Calculo de productividad por año
